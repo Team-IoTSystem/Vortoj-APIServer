@@ -41,10 +41,10 @@ func ConnectDB(c echo.Context) error {
 	}
 	sess := conn.NewSession(nil)
 
-	var packet datamodel.DBPacket
-	sess.Select("*").From(datamodel.TABLENAME).Where("id = ?", 1).Load(&packet)
+	var dbpacket datamodel.DBPacket
+	sess.Select("*").From(datamodel.TABLENAME).Where("id = ?", 1).Load(&dbpacket)
 
-	return c.JSON(http.StatusCreated, packet)
+	return c.JSON(http.StatusCreated, dbpacket)
 }
 
 //id=?に応じたのを返す
@@ -58,8 +58,7 @@ func SelectPacketData(c echo.Context) error {
 	id, _ := strconv.Atoi(c.QueryParam("id"))
 
 	var packet datamodel.DBPacket
-	sess.Select("*").From(datamodel.TABLENAME).Where("id = " + string(id)).Load(&packet)
-
+	sess.Select("*").From(datamodel.TABLENAME).Where("id = ?", id).Load(&packet)
 	return c.JSON(http.StatusCreated, packet)
 }
 

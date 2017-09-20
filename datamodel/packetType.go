@@ -23,7 +23,7 @@ type JsonPacket struct {
 	DataChank []byte `json:"datachank"`
 }
 type DBPacket struct {
-	ID        int16  `db:"id"`
+	ID        int64  `db:"id"`
 	DeviceID  string `db:"deviceid"`
 	SrcMAC    string `db:"src_mac"`
 	DstMAC    string `db:"dst_mac"`
@@ -38,4 +38,3 @@ type DBPacket struct {
 	Length    int64  `db:"length"`
 	DataChank []byte `db:"datachank"`
 }
-
