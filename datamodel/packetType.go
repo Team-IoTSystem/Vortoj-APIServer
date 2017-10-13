@@ -1,7 +1,7 @@
 package datamodel
 
 const (
-	LOCALPATH string = "./PacketVortoj.db"
+	LOCALPATH string = "/tmp/PacketVortoj.db"
 	TABLENAME string = "packet"
 	DBTYPE    string = "sqlite3"
 )
