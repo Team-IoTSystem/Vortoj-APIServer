@@ -1,11 +1,10 @@
 package datamodel
 
 const (
-	PATH               string = "root:root@tcp(127.0.0.1:3306)/"
-	DATABASE_NAME      string = "vortojpacket"
+	LOCALPATH          string = "/tmp/PacketVortoj.db"
 	PACKET_TABLENAME   string = "packet"
 	DISTANCE_TABLENAME string = "distance"
-	DBTYPE             string = "mysql"
+	DBTYPE             string = "sqlite3"
 )
 
 type DBPacket struct {
@@ -28,6 +27,6 @@ type DBPacket struct {
 type DistPacket struct {
 	ID       int64  `db:"id"`
 	MACaddr  string `db:"macaddr"`
-	PWR      int64  `db:"pwr"`
+	Pwr      int64  `db:"pwr"`
 	Distance int64  `db:"distance"`
 }

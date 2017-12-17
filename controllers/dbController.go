@@ -1,17 +1,15 @@
 package controllers
 
 import (
-	"database/sql"
-	"database/sql/driver"
 	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 
 	"../datamodel"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/gocraft/dbr"
 	"github.com/labstack/echo"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var dbinstance *dbr.Connection
@@ -23,27 +21,15 @@ func fileExists(filename string) bool {
 func getDBInstance() (*dbr.Connection, error) {
 	var err error
 	if dbinstance == nil {
-		conn, err := sql.Open(datamodel.DBTYPE, datamodel.PATH+datamodel.DATABASE_NAME)
-		if err != nil {
-			fmt.Errorf("mysql: could not get a connection: %v", err)
-			os.Exit(1)
+		if !fileExists(datamodel.LOCALPATH) {
+			fmt.Println("DB notfound,exit :(")
+			os.Exit(-1)
 		}
-		defer conn.Close()
-
-		// Check the connection.
-		if conn.Ping() == driver.ErrBadConn {
-			fmt.Errorf("mysql: could not connect to the database. " +
-				"could be bad address, or this address is not whitelisted for access.")
-			os.Exit(1)
-
-		}
-
-		dbinstance, err = dbr.Open(datamodel.DBTYPE, datamodel.PATH+datamodel.DATABASE_NAME, nil)
+		dbinstance, err = dbr.Open(datamodel.DBTYPE, datamodel.LOCALPATH, nil)
 		if err != nil {
 			fmt.Println("Success!DBConnection!")
 		}
 	}
-
 	return dbinstance, err
 }
 
@@ -85,8 +71,24 @@ func NewPacketData(c echo.Context) error {
 	sess := conn.NewSession(nil)
 
 	var packet datamodel.DBPacket
+	//	sess.SelectBySql("SELECT * FROM " + datamodel.TABLENAME + " WHERE id = (SELECT MAX(id) FROM " + datamodel.TABLENAME + ")").Load(&packet)
 
 	sess.Select("*").From(datamodel.PACKET_TABLENAME).Where("id = (SELECT MAX(id) FROM " + datamodel.PACKET_TABLENAME + ")").Load(&packet)
 
 	return c.JSON(http.StatusCreated, packet)
+}
+
+func InsertDB(c echo.Context) error {
+	conn, err := getDBInstance()
+	if err != nil {
+		os.Exit(-1)
+	}
+	u := new(datamodel.DistPacket)
+	if err := c.Bind(u); err != nil {
+		return err
+	}
+	sess := conn.NewSession(nil)
+
+	sess.InsertInto(datamodel.DISTANCE_TABLENAME).Columns("id", "mac", "pwr", "distance").Values(u.ID, u.MACaddr, u.Pwr, u.Distance).Exec()
+	return c.NoContent(http.StatusOK)
 }
