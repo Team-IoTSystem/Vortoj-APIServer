@@ -1,9 +1,10 @@
 package datamodel
 
 const (
-	LOCALPATH string = "/tmp/PacketVortoj.db"
-	TABLENAME string = "packet"
-	DBTYPE    string = "sqlite3"
+	LOCALPATH          string = "/tmp/PacketVortoj.db"
+	PACKET_TABLENAME   string = "packet"
+	DISTANCE_TABLENAME string = "distance"
+	DBTYPE             string = "sqlite3"
 )
 
 type DBPacket struct {
@@ -21,4 +22,11 @@ type DBPacket struct {
 	Protocol  string `db:"protocol"`
 	Length    int64  `db:"length"`
 	DataChank []byte `db:"datachank"`
+}
+
+type DistPacket struct {
+	ID       int64  `db:"id"`
+	MACaddr  string `db:"macaddr"`
+	Pwr      int64  `db:"pwr"`
+	Distance int64  `db:"distance"`
 }

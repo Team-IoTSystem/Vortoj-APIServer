@@ -42,7 +42,7 @@ func ConnectDB(c echo.Context) error {
 	sess := conn.NewSession(nil)
 
 	var dbpacket datamodel.DBPacket
-	sess.Select("*").From(datamodel.TABLENAME).Where("id = ?", 1).Load(&dbpacket)
+	sess.Select("*").From(datamodel.PACKET_TABLENAME).Where("id = ?", 1).Load(&dbpacket)
 
 	return c.JSON(http.StatusCreated, dbpacket)
 }
@@ -58,7 +58,7 @@ func SelectPacketData(c echo.Context) error {
 	id, _ := strconv.Atoi(c.QueryParam("id"))
 
 	var packet datamodel.DBPacket
-	sess.Select("*").From(datamodel.TABLENAME).Where("id = ?", id).Load(&packet)
+	sess.Select("*").From(datamodel.PACKET_TABLENAME).Where("id = ?", id).Load(&packet)
 	return c.JSON(http.StatusCreated, packet)
 }
 
@@ -73,7 +73,22 @@ func NewPacketData(c echo.Context) error {
 	var packet datamodel.DBPacket
 	//	sess.SelectBySql("SELECT * FROM " + datamodel.TABLENAME + " WHERE id = (SELECT MAX(id) FROM " + datamodel.TABLENAME + ")").Load(&packet)
 
-	sess.Select("*").From(datamodel.TABLENAME).Where("id = (SELECT MAX(id) FROM " + datamodel.TABLENAME + ")").Load(&packet)
+	sess.Select("*").From(datamodel.PACKET_TABLENAME).Where("id = (SELECT MAX(id) FROM " + datamodel.PACKET_TABLENAME + ")").Load(&packet)
 
 	return c.JSON(http.StatusCreated, packet)
+}
+
+func InsertDB(c echo.Context) error {
+	conn, err := getDBInstance()
+	if err != nil {
+		os.Exit(-1)
+	}
+	u := new(datamodel.DistPacket)
+	if err := c.Bind(u); err != nil {
+		return err
+	}
+	sess := conn.NewSession(nil)
+
+	sess.InsertInto(datamodel.DISTANCE_TABLENAME).Columns("id", "mac", "pwr", "distance").Values(u.ID, u.MACaddr, u.Pwr, u.Distance).Exec()
+	return c.NoContent(http.StatusOK)
 }

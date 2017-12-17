@@ -11,6 +11,7 @@ import (
 func main() {
 	e := echo.New()
 
+	e.Use(middleware.CORS())
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
@@ -23,7 +24,9 @@ func main() {
 	e.GET("/Packet/new", func(c echo.Context) error {
 		return controllers.NewPacketData(c)
 	})
-
+	e.POST("/InsertDB", func(c echo.Context) error {
+		return controllers.InsertDB(c)
+	})
 	// Start server
 	e.Logger.Fatal(e.Start(":3000"))
 }
