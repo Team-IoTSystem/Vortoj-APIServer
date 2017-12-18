@@ -1,12 +1,14 @@
 package datamodel
 
 const (
-	LOCALPATH          string = "/tmp/PacketVortoj.db"
+	PATH               string = "root:root@tcp(127.0.0.1:3306)/"
+	DATABASE_NAME      string = "vortojpacket"
 	PACKET_TABLENAME   string = "packet"
 	DISTANCE_TABLENAME string = "distance"
-	DBTYPE             string = "sqlite3"
+	DBTYPE             string = "mysql"
 )
 
+//DBPacket packetキャプチャしたデータのDBモデル
 type DBPacket struct {
 	ID        int64  `db:"id"`
 	DeviceID  string `db:"deviceid"`
@@ -24,9 +26,11 @@ type DBPacket struct {
 	DataChank []byte `db:"datachank"`
 }
 
-type DistPacket struct {
-	ID       int64  `db:"id"`
-	MACaddr  string `db:"macaddr"`
-	Pwr      int64  `db:"pwr"`
-	Distance int64  `db:"distance"`
+//DBDistance wifi電波強度による距離データのDBモデル
+type DBDistance struct {
+	ID     int64  `db:"id"`
+	DIST   int64  `db:"DIST"`
+	MAC    string `db:"MAC"`
+	PWR    int64  `db:"PWR"`
+	RpiMac string `db:"RPI_MAC"`
 }
