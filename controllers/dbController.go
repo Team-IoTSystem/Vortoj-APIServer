@@ -1,15 +1,18 @@
 package controllers
 
 import (
+	"database/sql"
+	"database/sql/driver"
 	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 
 	"../datamodel"
+	_ "github.com/go-sql-driver/mysql" //mysqlのドライバーをここでは明示的に呼び出していないのでblank importの形になっている
 	"github.com/gocraft/dbr"
 	"github.com/labstack/echo"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/labstack/gommon/log"
 )
 
 var dbinstance *dbr.Connection
@@ -21,9 +24,19 @@ func fileExists(filename string) bool {
 func getDBInstance() (*dbr.Connection, error) {
 	var err error
 	if dbinstance == nil {
-		if !fileExists(datamodel.LOCALPATH) {
-			fmt.Println("DB notfound,exit :(")
-			os.Exit(-1)
+		conn, err := sql.Open(datamodel.DBTYPE, datamodel.PATH+datamodel.DATABASE_NAME)
+		if err != nil {
+			log.Errorf("mysql: could not get a connection: %v", err)
+			os.Exit(1)
+		}
+		defer conn.Close()
+
+		// Check the connection.
+		if conn.Ping() == driver.ErrBadConn {
+			log.Errorf("mysql: could not connect to the database. " +
+				"could be bad address, or this address is not whitelisted for access.")
+			os.Exit(1)
+
 		}
 		dbinstance, err = dbr.Open(datamodel.DBTYPE, datamodel.LOCALPATH, nil)
 		if err != nil {
@@ -33,8 +46,12 @@ func getDBInstance() (*dbr.Connection, error) {
 	return dbinstance, err
 }
 
-//rootにアクセスした時に呼ばれる。id=1だけ呼び出すお試しのもの
-func ConnectDB(c echo.Context) error {
+/*
+/packet/~
+*/
+
+//RootConnect はrootにアクセスした時に呼ばれる。id=1だけ呼び出すお試しのもの
+func RootConnect(c echo.Context) error {
 	conn, err := getDBInstance()
 	if err != nil {
 		os.Exit(-1)
@@ -47,8 +64,8 @@ func ConnectDB(c echo.Context) error {
 	return c.JSON(http.StatusCreated, dbpacket)
 }
 
-//id=?に応じたのを返す
-func SelectPacketData(c echo.Context) error {
+//PacketDataSelectID は id=?に応じたのを返す
+func PacketDataSelectID(c echo.Context) error {
 	conn, err := getDBInstance()
 	if err != nil {
 		os.Exit(-1)
@@ -62,8 +79,8 @@ func SelectPacketData(c echo.Context) error {
 	return c.JSON(http.StatusCreated, packet)
 }
 
-//最新のidの情報を返す
-func NewPacketData(c echo.Context) error {
+//PacketDataSelectNew は最新のidの情報を返す
+func PacketDataSelectNew(c echo.Context) error {
 	conn, err := getDBInstance()
 	if err != nil {
 		os.Exit(-1)
@@ -78,17 +95,71 @@ func NewPacketData(c echo.Context) error {
 	return c.JSON(http.StatusCreated, packet)
 }
 
-func InsertDB(c echo.Context) error {
+//DistanceSelectMacAddress src_mac=?,dst_mac=?に応じたのを返す
+func PacketDataSelectMacAddress(c echo.Context) error {
 	conn, err := getDBInstance()
 	if err != nil {
 		os.Exit(-1)
 	}
-	u := new(datamodel.DistPacket)
-	if err := c.Bind(u); err != nil {
-		return err
+	sess := conn.NewSession(nil)
+
+	srcMac := c.QueryParam("src_mac")
+	dstMac := c.QueryParam("dst_mac")
+
+	var packet []datamodel.DBPacket
+	ch := make(chan bool)
+	go func(ch chan bool) {
+		sess.Select("*").From(datamodel.PACKET_TABLENAME).Where("src_mac=? OR dst_mac=?", srcMac, dstMac).Load(&packet)
+		ch <- true
+	}(ch)
+	<-ch
+	fmt.Println(packet)
+
+	return c.JSON(http.StatusCreated, packet)
+}
+
+/*
+/distance/~
+*/
+
+//DistanceSelectID はid=?に応じたのを返す
+func DistanceSelectID(c echo.Context) error {
+	conn, err := getDBInstance()
+	if err != nil {
+		os.Exit(-1)
 	}
 	sess := conn.NewSession(nil)
 
-	sess.InsertInto(datamodel.DISTANCE_TABLENAME).Columns("id", "mac", "pwr", "distance").Values(u.ID, u.MACaddr, u.Pwr, u.Distance).Exec()
-	return c.NoContent(http.StatusOK)
+	id, _ := strconv.Atoi(c.QueryParam("id"))
+
+	var distance datamodel.DBDistance
+	sess.Select("*").From(datamodel.DISTANCE_TABLENAME).Where("id = ?", id).Load(&distance)
+	return c.JSON(http.StatusCreated, distance)
+}
+
+//DistanceSelectNew は最新のidの情報を返す
+func DistanceSelectNew(c echo.Context) error {
+	conn, err := getDBInstance()
+	if err != nil {
+		os.Exit(-1)
+	}
+	sess := conn.NewSession(nil)
+	var distance datamodel.DBDistance
+	sess.Select("*").From(datamodel.PACKET_TABLENAME).Where("id = (SELECT MAX(id) FROM " + datamodel.DISTANCE_TABLENAME + ")").Load(&distance)
+	return c.JSON(http.StatusCreated, distance)
+}
+
+//DistanceSelectMacAddress はmacaddress=?に応じたのを返す
+func DistanceSelectMacAddress(c echo.Context) error {
+	conn, err := getDBInstance()
+	if err != nil {
+		os.Exit(-1)
+	}
+	sess := conn.NewSession(nil)
+
+	macaddress := c.QueryParam("macaddress")
+
+	var distance []datamodel.DBDistance
+	sess.Select("*").From(datamodel.DISTANCE_TABLENAME).Where("MAC = ?", macaddress).Load(&distance)
+	return c.JSON(http.StatusCreated, distance)
 }
