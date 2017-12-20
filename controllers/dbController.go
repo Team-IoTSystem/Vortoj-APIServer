@@ -38,7 +38,7 @@ func getDBInstance() (*dbr.Connection, error) {
 			os.Exit(1)
 
 		}
-		dbinstance, err = dbr.Open(datamodel.DBTYPE, datamodel.LOCALPATH, nil)
+		dbinstance, err = dbr.Open(datamodel.DBTYPE, datamodel.PATH+datamodel.DATABASE_NAME, nil)
 		if err != nil {
 			fmt.Println("Success!DBConnection!")
 		}
@@ -88,7 +88,6 @@ func PacketDataSelectNew(c echo.Context) error {
 	sess := conn.NewSession(nil)
 
 	var packet datamodel.DBPacket
-	//	sess.SelectBySql("SELECT * FROM " + datamodel.TABLENAME + " WHERE id = (SELECT MAX(id) FROM " + datamodel.TABLENAME + ")").Load(&packet)
 
 	sess.Select("*").From(datamodel.PACKET_TABLENAME).Where("id = (SELECT MAX(id) FROM " + datamodel.PACKET_TABLENAME + ")").Load(&packet)
 
@@ -103,8 +102,8 @@ func PacketDataSelectMacAddress(c echo.Context) error {
 	}
 	sess := conn.NewSession(nil)
 
-	srcMac := c.QueryParam("src_mac")
-	dstMac := c.QueryParam("dst_mac")
+	srcMac := c.QueryParam("src_macaddress")
+	dstMac := c.QueryParam("dst_macaddress")
 
 	var packet []datamodel.DBPacket
 	ch := make(chan bool)
