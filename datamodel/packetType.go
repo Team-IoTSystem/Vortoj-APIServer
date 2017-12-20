@@ -29,8 +29,8 @@ type DBPacket struct {
 //DBDistance wifi電波強度による距離データのDBモデル
 type DBDistance struct {
 	ID     int64  `db:"id"`
-	DIST   int64  `db:"DIST"`
-	MAC    string `db:"MAC"`
-	PWR    int64  `db:"PWR"`
-	RpiMac string `db:"RPI_MAC"`
+	Mac    string `db:"macaddr"`
+	RpiMac string `db:"rpimac"`
+	Dist   int64  `db:"distance"`
+	Pwr    int64  `db:"pwr"`
 }
