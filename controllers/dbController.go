@@ -157,8 +157,20 @@ func DistanceSelectMacAddress(c echo.Context) error {
 	sess := conn.NewSession(nil)
 
 	macaddress := c.QueryParam("macaddress")
+	rpimacaddress := c.QueryParam("rpi_macaddress")
+	order_one, _ := strconv.Atoi(c.QueryParam("new_order_one"))
 
 	var distance []datamodel.DBDistance
-	sess.Select("*").From(datamodel.DISTANCE_TABLENAME).Where("MAC = ?", macaddress).Load(&distance)
+
+	if order_one == 1 {
+		//ex test
+		// localhost:3000/api/distance/macaddress?macaddress=84:89:AD:8D:85:F6&rpi_macaddress=b827ebf277a4&order_one=1
+		// select * from distance where id = (select MAX(id) from distance where macaddr = "84:89:AD:8D:85:F6" AND rpimac = "b827ebf277a4")
+		sess.Select("*").From(datamodel.DISTANCE_TABLENAME).
+			Where("id = (select MAX(id) from "+datamodel.DISTANCE_TABLENAME+
+				" where macaddr = ? AND rpimac = ?)", macaddress, rpimacaddress).Load(&distance)
+	} else {
+		sess.Select("*").From(datamodel.DISTANCE_TABLENAME).Where("macaddr = ?", macaddress).Load(&distance)
+	}
 	return c.JSON(http.StatusCreated, distance)
 }
