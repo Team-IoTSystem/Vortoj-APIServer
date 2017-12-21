@@ -1,4 +1,5 @@
 # Vortoj-APIServer
+Bonan tagon! 集められたパケットデータをAPIとして提供するモジュールです。 
 
 ## APIリファレンス
 
@@ -12,3 +13,4 @@
 | /api/distance/:id    | distanceテーブルのidパラメータを指定できる      |
 | /api/distance/new    | distanceテーブルの最新データを引き取る     |
 | /api/distance/macaddress   | distanceテーブルのmacaddressを指定できる,`macaddress`と`rpi_macaddress`を指定して、`new_order_one=1`にするとそれの積集合の中から最新のデータを一件引き取れる     |
+
